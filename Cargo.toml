@@ -1,0 +1,23 @@
+[package]
+name = "ethereum-handshake"
+version = "0.1.0"
+edition = "2021"
+authors = ["Ivan Lazarević"]
+description = "Ethereum peer-to-peer handshake procedure"
+repository = "https://github.com/ivanbgd/ethereum-handshake"
+license = "MIT"
+keywords = ["eth", "ethereum", "handshake", "p2p", "peer-to-peer"]
+categories = ["cryptography", "cryptography::cryptocurrencies"]
+
+[profile.release]
+strip = "symbols"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "ethereum-handshake"
+path = "src/main.rs"
+
+[dependencies]
+# tokio = { version = "1.38", features = ["macros", "rt", "rt-multi-thread"] }
