@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-07-09 - TODO
+## [0.1.0] - 2024-07-10 - TODO
 
 This is the very first (initial) fully-functioning version of the library and the program.
 

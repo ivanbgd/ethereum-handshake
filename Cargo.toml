@@ -20,4 +20,5 @@ name = "ethereum-handshake"
 path = "src/main.rs"
 
 [dependencies]
+clap = { version = "4.5.9", features = ["derive"] }
 # tokio = { version = "1.38", features = ["macros", "rt", "rt-multi-thread"] }
