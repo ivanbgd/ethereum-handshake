@@ -1,5 +1,8 @@
 # Ethereum Handshake Procedure
 
+[![CI](https://github.com/ivanbgd/ethereum-handshake/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/ethereum-handshake/actions/workflows/ci.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
 ## Introduction
 
 - This is a client program that dials and connects to an Ethereum node.
@@ -30,6 +33,26 @@
 - This project uses asynchrony for concurrent execution. We use the
   [tokio](https://crates.io/crates/tokio) library for that.
 
+## Development
+
+### Pre-Push Checks
+
+Pre-push hooks are available in this repository.
+
+A Python package is required to use them. Install it by executing:
+
+`pip3 install pre-commit`
+
+Inside the repository, run:
+
+`pre-commit install --hook-type pre-push`
+
+The hooks will be run automatically before each push.
+
+We can also run them manually like this:
+
+`pre-commit run --all-files`
+
 ## Command Line Arguments
 
 ### Arguments
@@ -49,6 +72,7 @@
     - This is an Ethereum boot node running on the Holesky test network.
     - Boot node addresses can be found at:  
       https://github.com/ethereum/go-ethereum/blob/master/params/bootnodes.go
+    - Boot nodes should be up and running all the time.
 - Alternatively, pick a node from:
     - https://etherscan.io/nodetracker/nodes
     - https://ethernodes.org/nodes
