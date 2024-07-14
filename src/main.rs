@@ -12,7 +12,7 @@ use clap::Parser;
 use tokio::net::TcpStream;
 use tracing::{error, info, warn};
 
-use ethereum_handshake::cli::{Args, parse_target_enode};
+use ethereum_handshake::cli::{parse_target_enode, Args};
 use ethereum_handshake::handshake::handshake;
 use ethereum_handshake::telemetry::init_subscriber;
 

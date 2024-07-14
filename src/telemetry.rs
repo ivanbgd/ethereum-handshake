@@ -1,6 +1,6 @@
 //! src/telemetry.rs
 
-use tracing_subscriber::{EnvFilter, filter::LevelFilter};
+use tracing_subscriber::{filter::LevelFilter, EnvFilter};
 
 /// Initialize tracing with the INFO log level as default
 pub fn init_subscriber() {

@@ -23,13 +23,13 @@ pub struct Args {
 pub fn parse_target_enode(recipient_enode: String) -> Result<(String, String), Error> {
     let mut split_enode = recipient_enode.split('@');
 
-    let user = split_enode.nth(0).unwrap_or_default();
+    let user = split_enode.next().unwrap_or_default();
     let username = match user.get(8..) {
         Some(key) => key.to_string(),
         None => return Err(Error::InvalidUserName(user.to_string())),
     };
 
-    let hostname = match split_enode.nth(0) {
+    let hostname = match split_enode.next() {
         Some(addr) => addr.to_string(),
         None => return Err(Error::InvalidHostName()),
     };
