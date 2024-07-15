@@ -10,4 +10,5 @@ pub mod cli;
 pub mod constants;
 pub mod errors;
 pub mod handshake;
+pub mod interface;
 pub mod telemetry;
