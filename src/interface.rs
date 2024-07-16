@@ -13,43 +13,52 @@
 use std::time::Duration;
 
 use tokio::net::TcpStream;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use crate::cli::ParsedArgs;
-use crate::errors::{Error, Result};
+use crate::errors::{CliError, ConnError};
 use crate::handshake::initiate_handshake;
 
 /// Dial a single recipient node
 ///
 /// Provides some basic, exemplary, validation.
 ///
+/// Expects an IPv4 address.
+///
 /// # Errors
-/// - Error::InvalidRecipientHostName
-pub async fn dial(parsed_args: ParsedArgs) -> Result<(), Error> {
+/// - [`CliError::InvalidRecipientHostName`]
+/// - [`CliError::ConnectionError`] => [`ConnError::TcpStreamError`]
+pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
     let timeout = parsed_args.timeout;
     let username = parsed_args.username;
     let hostname = parsed_args.hostname;
 
     let ip = hostname.clone();
     if !ip.contains(':') {
-        return Err(Error::InvalidRecipientHostName(ip.to_string()));
+        return Err(CliError::InvalidRecipientHostName(ip.to_string()));
     }
     let ip = ip.split(':').next().expect("Expected colon in hostname");
 
     info!("Connecting to recipient {}...", ip);
 
-    if let Ok(stream) = tokio::time::timeout(
+    match tokio::time::timeout(
         Duration::from_millis(timeout),
         TcpStream::connect(&hostname),
     )
     .await
     {
-        info!("Connected to recipient {}.", ip);
-        if let Err(err) = initiate_handshake(&mut stream.unwrap(), username, hostname).await {
-            warn!("{}", err);
+        Ok(stream) => {
+            let mut stream = match stream {
+                Ok(stream) => stream,
+                Err(err) => return Err(CliError::from(ConnError::TcpStreamError(err.to_string()))),
+            };
+
+            info!("Connected to recipient {}.", ip);
+            if let Err(err) = initiate_handshake(&mut stream, username, hostname).await {
+                error!("Failed to handshake to recipient {} due to {}.", ip, err);
+            }
         }
-    } else {
-        error!("Failed to connect to recipient {}.", ip);
+        Err(err) => error!("Failed to connect to recipient {} due to {}.", ip, err),
     }
 
     Ok(())
@@ -86,6 +95,9 @@ mod tests {
         let result = dial(parsed_args).await;
 
         assert!(result.is_err());
-        assert_eq!(Err(Error::InvalidRecipientHostName(bad_hostname)), result);
+        assert_eq!(
+            Err(CliError::InvalidRecipientHostName(bad_hostname)),
+            result
+        );
     }
 }

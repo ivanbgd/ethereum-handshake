@@ -3,7 +3,7 @@
 use clap::Parser;
 
 use crate::constants::TIMEOUT;
-use crate::errors::Error;
+use crate::errors::CliError;
 
 /// An implementation of the Ethereum handshake procedure
 #[derive(Parser)]
@@ -16,7 +16,7 @@ struct CliArgs {
     pub timeout: u64,
 
     /// Recipient node's enode in the following form:
-    /// enode://<node_id>@<ip_address>:<port>
+    /// enode://<node_id>@<ipv4_address>:<port>
     pub recipient_enode: String,
 }
 
@@ -24,6 +24,7 @@ struct CliArgs {
 /// - timeout
 /// - username (part of enode - public key)
 /// - hostname (part of enode - address:port
+#[derive(Debug)]
 pub struct ParsedArgs {
     pub timeout: u64,
     pub username: String,
@@ -34,7 +35,7 @@ pub struct ParsedArgs {
 ///
 /// # Returns
 /// [`ParsedArgs`]
-pub fn parse_cli_args() -> crate::errors::Result<ParsedArgs, Error> {
+pub fn parse_cli_args() -> Result<ParsedArgs, CliError> {
     let args = CliArgs::parse();
     let timeout = args.timeout;
     let recipient_enode = args.recipient_enode;
@@ -58,27 +59,27 @@ pub fn parse_cli_args() -> crate::errors::Result<ParsedArgs, Error> {
 ///
 /// `enode://<node_id>@<ip_address>:<port>`
 ///
+/// This function doesn't require the IP address to necessarily be IPv4.
+///
 /// # Returns
 /// - `username` is the recipient's public key.
 /// - `hostname` is the recipient's IP address and port, separated by `:`.
 ///
 /// # Errors
-/// - [`Error::InvalidRecipientUserName`]
-/// - [`Error::InvalidRecipientEnode`]
-pub fn parse_recipient_enode(
-    recipient_enode: String,
-) -> crate::errors::Result<(String, String), Error> {
+/// - [`CliError::InvalidRecipientUserName`], if it can't parse it
+/// - [`CliError::InvalidRecipientEnode`], if `enode` doesn't contain `@`
+pub fn parse_recipient_enode(recipient_enode: String) -> Result<(String, String), CliError> {
     let mut split_enode = recipient_enode.split('@');
 
     let user = split_enode.next().unwrap_or_default();
     let username = match user.get(8..) {
         Some(key) => key.to_string(),
-        None => return Err(Error::InvalidRecipientUserName(user.to_string())),
+        None => return Err(CliError::InvalidRecipientUserName(user.to_string())),
     };
 
     let hostname = match split_enode.next() {
         Some(addr) => addr.to_string(),
-        None => return Err(Error::InvalidRecipientEnode),
+        None => return Err(CliError::InvalidRecipientEnode),
     };
 
     Ok((username, hostname))
@@ -109,7 +110,10 @@ mod tests {
         let result = parse_recipient_enode(enode);
 
         assert!(result.is_err());
-        assert_eq!(Err(Error::InvalidRecipientUserName("".to_string())), result);
+        assert_eq!(
+            Err(CliError::InvalidRecipientUserName("".to_string())),
+            result
+        );
     }
 
     #[test]
@@ -120,6 +124,6 @@ mod tests {
         let result = parse_recipient_enode(enode);
 
         assert!(result.is_err());
-        assert_eq!(Err(Error::InvalidRecipientEnode), result);
+        assert_eq!(Err(CliError::InvalidRecipientEnode), result);
     }
 }

@@ -2,13 +2,13 @@
 
 [![CI](https://github.com/ivanbgd/ethereum-handshake/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/ethereum-handshake/actions/workflows/ci.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![License](https://img.shields.io/github/license/ivanbgd/ethereum-handshake.svg)](https://github.com/ivanbgd/ethereum-handshake)
 
 ## Introduction
 
 - This is a client program that dials and connects to an Ethereum node.
 - The node's [enode](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/#enode)
   should be provided by the user through command line.
+    - It should contain an IPv4 address, which is almost always the case with Ethereum nodes.
 - TODO: It can act as a receiver (a listener), as well,
   not only as an initiator of the connection, making it bidirectional.
 - It implements the Ethereum handshake procedure, which is part of the
@@ -64,7 +64,7 @@ We can also run them manually like this:
 ### Arguments
 
 - `<RECIPIENT_ENODE>`: Recipient node's `enode` in the following form:  
-  `enode://<node_id>@<ip_address>:<port>`
+  `enode://<node_id>@<ipv4_address>:<port>`
 
 ### Options
 

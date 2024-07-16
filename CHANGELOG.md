@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-07-10 - TODO
+- Acting as a recipient (responding to a handshake request)
+- Connecting to and/or from multiple nodes at the same time
+
+## [0.1.0] - 2024-07-16 - TODO
 
 This is the very first (initial) fully-functioning version of the library and the program.
+
+The program acts as a client and calls another node.
+
+The handshake procedure is implemented in that case.
 
 ### Added
 
@@ -21,3 +28,4 @@ This is the very first (initial) fully-functioning version of the library and th
 - `LICENSE` ("MIT")
 - `CHANGELOG.md`
 - GitHub actions: `audit.yml`, `ci.yml`, `release.yml`
+- Pre-push hooks
