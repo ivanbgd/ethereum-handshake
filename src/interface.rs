@@ -13,7 +13,7 @@
 use std::time::Duration;
 
 use tokio::net::TcpStream;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::cli::ParsedArgs;
 use crate::errors::{CliError, ConnError};
@@ -68,6 +68,7 @@ pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
 
 /// Answer to a single connection and handshake request
 pub async fn answer(_timeout: u64) -> Result<(), CliError> {
+    debug!("Entering `answer()`");
     unimplemented!()
 }
 

@@ -18,7 +18,7 @@ struct CliArgs {
     /// Recipient node's enode in the following form:
     /// enode://<node_id>@<ipv4_address>:<port>
     #[arg(short, long)]
-    pub recipient_enode: String,
+    pub recipient_enode: Option<String>,
 }
 
 /// Parsed CLI arguments
@@ -42,7 +42,7 @@ pub fn parse_cli_args() -> Result<ParsedArgs, CliError> {
     let recipient_enode = args.recipient_enode;
 
     let (mut username, mut hostname) = ("".to_string(), "".to_string());
-    if !recipient_enode.is_empty() {
+    if let Some(recipient_enode) = recipient_enode {
         (username, hostname) = parse_recipient_enode(recipient_enode.as_ref())?;
     }
 
