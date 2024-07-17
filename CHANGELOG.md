@@ -14,16 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the very first (initial) fully-functioning version of the library and the program.
 
-The program acts as a client and calls another node.
+The program supports the initiator mode, acting as a client and calling another node.
 
 The handshake procedure is implemented in that case.
 
 ### Added
 
-- Library crate:
-    - The main business logic function (public),
-    - Helper functions (private).
-- Binary (executable) crate, which uses the library.
+- Library crate
+- Binary (executable) crate, which uses the library
 - `README.md`
 - `LICENSE` ("MIT")
 - `CHANGELOG.md`

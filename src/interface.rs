@@ -21,13 +21,15 @@ use crate::handshake::initiate_handshake;
 
 /// Dial a single recipient node
 ///
+/// Tries to connect to the node and then to handshake with it.
+///
 /// Provides some basic, exemplary, validation.
 ///
 /// Expects an IPv4 address.
 ///
 /// # Errors
 /// - [`CliError::InvalidRecipientHostName`]
-/// - [`CliError::ConnectionError`] => [`ConnError::TcpStreamError`]
+/// - [`CliError::ConnectionError`] wrapping [`ConnError::TcpStreamError`]
 pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
     let timeout = parsed_args.timeout;
     let username = parsed_args.username;
@@ -62,6 +64,11 @@ pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
     }
 
     Ok(())
+}
+
+/// Answer to a single connection and handshake request
+pub async fn answer(_timeout: u64) -> Result<(), CliError> {
+    unimplemented!()
 }
 
 #[cfg(test)]

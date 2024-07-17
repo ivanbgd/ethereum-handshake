@@ -2,7 +2,18 @@
 //!
 //! Includes constants that are used in tests.
 
+/* CLI Constants */
+
 pub const TIMEOUT: u64 = 1000;
+
+/* Connection Constants */
+
+// A placeholder for connection constants
+
+/* Handshake Constants */
+
+pub const AUTH_VERSION: usize = 5;
+pub const PUBLIC_KEY_UNCOMPRESSED_LEN: usize = 65;
 
 /* Test Constants */
 

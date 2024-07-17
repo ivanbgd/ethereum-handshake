@@ -12,18 +12,19 @@ use crate::errors::CliError;
 struct CliArgs {
     /// Handshake timeout in milliseconds, from 100 to 10000
     #[arg(short, long, default_value_t = TIMEOUT,
-    value_parser = clap::value_parser!(u64).range(1..=10*TIMEOUT))]
+    value_parser = clap::value_parser!(u64).range(100..=10*TIMEOUT))]
     pub timeout: u64,
 
     /// Recipient node's enode in the following form:
     /// enode://<node_id>@<ipv4_address>:<port>
+    #[arg(short, long)]
     pub recipient_enode: String,
 }
 
 /// Parsed CLI arguments
 /// - timeout
-/// - username (part of enode - public key)
-/// - hostname (part of enode - address:port
+/// - username (part of recipient's enode - public key)
+/// - hostname (part of recipient's enode - address:port
 #[derive(Debug)]
 pub struct ParsedArgs {
     pub timeout: u64,
@@ -39,7 +40,11 @@ pub fn parse_cli_args() -> Result<ParsedArgs, CliError> {
     let args = CliArgs::parse();
     let timeout = args.timeout;
     let recipient_enode = args.recipient_enode;
-    let (username, hostname) = parse_recipient_enode(recipient_enode)?;
+
+    let (mut username, mut hostname) = ("".to_string(), "".to_string());
+    if !recipient_enode.is_empty() {
+        (username, hostname) = parse_recipient_enode(recipient_enode.as_ref())?;
+    }
 
     Ok(ParsedArgs {
         timeout,
@@ -68,7 +73,7 @@ pub fn parse_cli_args() -> Result<ParsedArgs, CliError> {
 /// # Errors
 /// - [`CliError::InvalidRecipientUserName`], if it can't parse it
 /// - [`CliError::InvalidRecipientEnode`], if `enode` doesn't contain `@`
-pub fn parse_recipient_enode(recipient_enode: String) -> Result<(String, String), CliError> {
+pub fn parse_recipient_enode(recipient_enode: &str) -> Result<(String, String), CliError> {
     let mut split_enode = recipient_enode.split('@');
 
     let user = split_enode.next().unwrap_or_default();
@@ -93,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_parse_recipient_enode_pass() {
-        let enode = TEST_ENODE.to_string();
+        let enode = TEST_ENODE;
 
         let result = parse_recipient_enode(enode);
         assert!(result.is_ok());
@@ -105,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_parse_recipient_enode_fail_bad_username() {
-        let enode = "".to_string();
+        let enode = "";
 
         let result = parse_recipient_enode(enode);
 
@@ -121,7 +126,7 @@ mod tests {
         let mut enode = TEST_ENODE.to_string();
         enode = enode.replace('@', "A");
 
-        let result = parse_recipient_enode(enode);
+        let result = parse_recipient_enode(enode.as_ref());
 
         assert!(result.is_err());
         assert_eq!(Err(CliError::InvalidRecipientEnode), result);

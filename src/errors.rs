@@ -1,8 +1,6 @@
-//! The errors that are used in the library and that can be used in a binary crate.
+//! The errors that are used in the library and that can be used in binary crates.
 
 use thiserror::Error;
-
-// pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Input errors that come from the CLI
 #[derive(Debug, Error, PartialEq)]
@@ -22,10 +20,7 @@ pub enum CliError {
 
 impl From<ConnError> for CliError {
     fn from(value: ConnError) -> Self {
-        match value {
-            ConnError::TcpStreamError(msg) => CliError::ConnectionError(msg),
-            ConnError::TimeoutError(msg) => CliError::ConnectionError(msg.to_string()),
-        }
+        Self::ConnectionError(value.to_string())
     }
 }
 
@@ -39,6 +34,7 @@ pub enum ConnError {
     TimeoutError(#[from] tokio::time::error::Elapsed),
 }
 
+/// Errors during the handshake procedure
 #[derive(Debug, Error)]
 pub enum HandshakeError {
     #[error("Hex decode error: {0}")]
@@ -46,4 +42,13 @@ pub enum HandshakeError {
 
     #[error("Sec1 error: {0}")]
     Sec1Error(String),
+
+    #[error("I/O Error: {0}")]
+    IOError(String),
+}
+
+impl From<std::io::Error> for HandshakeError {
+    fn from(value: std::io::Error) -> Self {
+        Self::IOError(value.to_string())
+    }
 }

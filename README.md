@@ -63,12 +63,15 @@ We can also run them manually like this:
 
 ### Arguments
 
-- `<RECIPIENT_ENODE>`: Recipient node's `enode` in the following form:  
-  `enode://<node_id>@<ipv4_address>:<port>`
+There are no required arguments.
+
+TODO: If recipient isn't provided, the application will act as a receiver.
 
 ### Options
 
 - `-t`, `--timeout <TIMEOUT>`: Handshake timeout in milliseconds, from 100 to 10000 [default: 1000]
+- `-r`, `--recipient-enode <RECIPIENT_ENODE>`: Recipient node's `enode` in the following form:  
+  `enode://<node_id>@<ipv4_address>:<port>`
 
 ## Running
 
@@ -86,15 +89,19 @@ We can also run them manually like this:
       [enode](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/#enode).
 - Executables can be downloaded from the repository's
   [Releases](https://github.com/ivanbgd/ethereum-handshake/releases) page.
-    - `ethereum-handshake [-t <TIMEOUT>] <RECIPIENT_ENODE>`
-        - Example: `ethereum-handshake -t 800 <RECIPIENT_ENODE>`
+    - `ethereum-handshake [-t <TIMEOUT>] [-r <RECIPIENT_ENODE>]`
+        - Example: `ethereum-handshake -t 800 -r <RECIPIENT_ENODE>`
 - Alternatively, by using `cargo`:
-    - `cargo run [--release] -- [-t <TIMEOUT>] <RECIPIENT_ENODE>`
-        - Example: `cargo run -- -t 2000 <RECIPIENT_ENODE>`
+    - `cargo run [--release] -- [-t <TIMEOUT>] [-r <RECIPIENT_ENODE>]`
+        - Example: `cargo run -- -t 2000 -r <RECIPIENT_ENODE>`
 
 ## Testing
 
-- TODO
+- Unit tests are implemented.
+    - They can be performed by executing:  
+      `cargo test`
+- Manual testing can be performed by running the application from the CLI,
+  as described above.
 
 ## References
 
