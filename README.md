@@ -75,9 +75,13 @@ TODO: If recipient isn't provided, the application will act as a receiver.
 
 ## Running
 
-- Substitute `<RECIPIENT_ENODE>` with
+- You can optionally set the `RUST_LOG` environment variable to `debug` or `trace` to
+  have more detailed log messaging.
+    - The log level is set to `info` by default.
+    - `export RUST_LOG=debug`
+    - `export RUST_LOG=trace`
+- In the following examples, substitute `<RECIPIENT_ENODE>` with
   `enode://a3435a0155a3e837c02f5e7f5662a2f1fbc25b48e4dc232016e1c51b544cb5b4510ef633ea3278c0e970fa8ad8141e2d4d0f9f95456c537ff05fdf9b31c15072@178.128.136.233:30303`
-  in the following examples.
     - This is an Ethereum boot node running on the Holesky test network.
     - Boot node addresses can be found at:  
       https://github.com/ethereum/go-ethereum/blob/master/params/bootnodes.go
