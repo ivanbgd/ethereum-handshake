@@ -31,7 +31,7 @@ use crate::handshake::initiate_handshake;
 /// # Errors
 /// - [`CliError::InvalidRecipientHostName`]
 /// - [`CliError::ConnectionError`] wrapping [`ConnError::TcpStreamError`]
-pub async fn dial(static_secret_key: SecretKey, parsed_args: ParsedArgs) -> Result<(), CliError> {
+pub async fn dial(static_secret_key: &SecretKey, parsed_args: ParsedArgs) -> Result<(), CliError> {
     let timeout = parsed_args.timeout;
     let username = parsed_args.username;
     let hostname = parsed_args.hostname;
@@ -83,6 +83,8 @@ pub async fn answer(_timeout: u64) -> Result<(), CliError> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::OnceLock;
+
     use k256::SecretKey;
     use rand_core::OsRng;
 
@@ -91,9 +93,11 @@ mod tests {
 
     use super::*;
 
+    static STATIC_SK: OnceLock<SecretKey> = OnceLock::new();
+
     #[tokio::test]
     async fn test_dial_pass() {
-        let static_secret_key: SecretKey = SecretKey::random(&mut OsRng);
+        STATIC_SK.get_or_init(|| SecretKey::random(&mut OsRng));
 
         let parsed_args = ParsedArgs {
             timeout: 1000,
@@ -101,12 +105,12 @@ mod tests {
             hostname: TEST_HOSTNAME.to_string(),
         };
 
-        assert!(dial(static_secret_key, parsed_args).await.is_ok());
+        assert!(dial(&STATIC_SK.get().unwrap(), parsed_args).await.is_ok());
     }
 
     #[tokio::test]
     async fn test_dial_fail_missing_colon() {
-        let static_secret_key: SecretKey = SecretKey::random(&mut OsRng);
+        STATIC_SK.get_or_init(|| SecretKey::random(&mut OsRng));
 
         let bad_hostname = TEST_HOSTNAME.replace(':', "");
 
@@ -116,7 +120,7 @@ mod tests {
             hostname: bad_hostname.clone(),
         };
 
-        let result = dial(static_secret_key, parsed_args).await;
+        let result = dial(&STATIC_SK.get().unwrap(), parsed_args).await;
 
         assert!(result.is_err());
         assert_eq!(

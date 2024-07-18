@@ -38,7 +38,7 @@ async fn main() -> eyre::Result<()> {
     let parsed_args = parse_cli_args()?;
 
     if !parsed_args.hostname.is_empty() {
-        dial(static_secret_key, parsed_args).await?;
+        dial(&static_secret_key, parsed_args).await?;
     } else {
         answer(parsed_args.timeout).await?;
     }

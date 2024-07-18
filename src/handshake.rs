@@ -27,7 +27,7 @@ use crate::errors::HandshakeError;
 /// https://github.com/ethereum/devp2p/blob/master/rlpx.md
 #[instrument(level = "trace", skip_all)]
 pub async fn initiate_handshake(
-    static_secret_key: SecretKey,
+    static_secret_key: &SecretKey,
     stream: &mut TcpStream,
     username: String,
     hostname: String,
@@ -71,7 +71,7 @@ pub async fn respond_to_handshake() {
 /// Step 1: initiator connects to recipient and sends its `auth` message
 #[instrument(level = "trace", skip_all)]
 async fn step_1(
-    static_secret_key: SecretKey,
+    static_secret_key: &SecretKey,
     stream: &mut TcpStream,
     username: &String,
     hostname: &String,
