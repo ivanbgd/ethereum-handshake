@@ -3,9 +3,13 @@
 //! - Initiate handshake
 //! - Respond to a handshake request - not implemented
 
+use std::ops::Deref;
+
 // use ecies::{decrypt, utils::generate_keypair};
+use ethereum_types::H256;
 use hex;
 use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey};
+// use k256::ecdsa::{self, Signature, signature::Signer, SigningKey};
 use rand_core::OsRng;
 // use rlp::{Rlp, RlpStream};
 use rlp::RlpStream;
@@ -72,9 +76,13 @@ async fn step_1(
 ) -> Result<(), HandshakeError> {
     debug!("Begin Step 1 with {}", hostname);
 
-    let init_secret = EphemeralSecret::random(&mut OsRng);
-    let init_secret = Secret::new(init_secret);
-    let _init_pk_bytes = EncodedPoint::from(init_secret.expose_secret().public_key());
+    let sk = k256::SecretKey::random(&mut OsRng);
+    // let sk = Secret::new(sk.to_bytes());
+    let _pk = EncodedPoint::from(sk.public_key());
+
+    let init_ephemeral_secret = EphemeralSecret::random(&mut OsRng);
+    let init_ephemeral_secret = Secret::new(init_ephemeral_secret);
+    let _init_pubkey_bytes = EncodedPoint::from(init_ephemeral_secret.expose_secret().public_key());
 
     let username = match hex::decode(username) {
         Ok(name) => name,
@@ -88,19 +96,30 @@ async fn step_1(
         Err(err) => Err(HandshakeError::Sec1Error(err.to_string()))?,
     };
 
-    let _init_shared = init_secret.expose_secret().diffie_hellman(&recip_public);
+    let init_shared = init_ephemeral_secret
+        .expose_secret()
+        .diffie_hellman(&recip_public);
+    let init_shared = H256::from_slice(init_shared.raw_secret_bytes());
+
+    let init_nonce = H256::random();
+    let init_pubkey = init_ephemeral_secret.expose_secret().public_key();
+
+    // compute signature
+    let _message = init_shared ^ init_nonce;
 
     // "auth_body" is an RLP stream of 4 values
-    let mut rlp_stream = RlpStream::new_list(1);
-    // rlp_stream.append(sig);
-    // rlp_stream.append(init_pubkey);
-    // rlp_stream.append(init_nonce);
+    let mut rlp_stream = RlpStream::new_list(3);
+    // rlp_stream.append(signature);
+    rlp_stream.append(&init_pubkey.to_sec1_bytes().deref());
+    rlp_stream.append(&init_nonce);
     rlp_stream.append(&AUTH_VERSION);
     let auth_body = rlp_stream.out();
 
     let _enc_auth_body = ecies::encrypt(username.as_ref(), auth_body.as_ref());
+    let _enc_auth_body = ecies::encrypt(aux.as_ref(), auth_body.as_ref());
+    let _enc_auth_body = ecies::encrypt(&recip_public.to_sec1_bytes(), auth_body.as_ref());
 
-    let auth = "";
+    let auth = _enc_auth_body.unwrap();
 
     // send the "auth" message to recipient
     stream.write_all(auth.as_ref()).await?;
@@ -124,9 +143,12 @@ async fn step_5(
     debug!("Begin Step 5 with {}", hostname);
 
     // receive the "auth-ack" message from recipient
-    let mut auth_ack = [0u8; 1024];
-    let auth_ack_len = Secret::new(stream.read(&mut auth_ack).await?);
-    // dbg!(auth_ack);
+
+    // pin the buffer for security reasons so that it can't be relocated and copied over,
+    // so that we're certain we've manually zeroized the only instance at the end
+    let mut auth_ack = Box::pin([0u8; 1024]);
+    let auth_ack_len = Secret::new(stream.read(&mut *auth_ack).await?);
+    eprintln!("{:?}", *auth_ack);
     dbg!(auth_ack_len.expose_secret());
 
     // derive secrets

@@ -22,6 +22,7 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
 ecies = { version = "0.2", features = ["std"] }
+ethereum-types = "0.14.1"
 eyre = "0.6"
 hex = "0.4.3"
 #k256 = { version = "0.13.3", default-features = false, features = ["arithmetic", "ecdh"] }
