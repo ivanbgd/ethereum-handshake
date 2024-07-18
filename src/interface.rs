@@ -12,6 +12,7 @@
 
 use std::time::Duration;
 
+use k256::SecretKey;
 use tokio::net::TcpStream;
 use tracing::{debug, error, info};
 
@@ -30,7 +31,7 @@ use crate::handshake::initiate_handshake;
 /// # Errors
 /// - [`CliError::InvalidRecipientHostName`]
 /// - [`CliError::ConnectionError`] wrapping [`ConnError::TcpStreamError`]
-pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
+pub async fn dial(static_secret_key: SecretKey, parsed_args: ParsedArgs) -> Result<(), CliError> {
     let timeout = parsed_args.timeout;
     let username = parsed_args.username;
     let hostname = parsed_args.hostname;
@@ -43,6 +44,7 @@ pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
 
     info!("Connecting to recipient {}...", ip);
 
+    // connection timeout
     match tokio::time::timeout(
         Duration::from_millis(timeout),
         TcpStream::connect(&hostname),
@@ -56,8 +58,15 @@ pub async fn dial(parsed_args: ParsedArgs) -> Result<(), CliError> {
             };
 
             info!("Connected to recipient {}.", ip);
-            if let Err(err) = initiate_handshake(&mut stream, username, hostname).await {
-                error!("Failed to handshake to recipient {} due to {}.", ip, err);
+
+            // handshake timeout
+            if let Err(err) = tokio::time::timeout(
+                Duration::from_millis(timeout),
+                initiate_handshake(static_secret_key, &mut stream, username, hostname),
+            )
+            .await
+            {
+                error!("Failed to handshake with recipient {} due to {}.", ip, err);
             }
         }
         Err(err) => error!("Failed to connect to recipient {} due to {}.", ip, err),
@@ -74,6 +83,9 @@ pub async fn answer(_timeout: u64) -> Result<(), CliError> {
 
 #[cfg(test)]
 mod tests {
+    use k256::SecretKey;
+    use rand_core::OsRng;
+
     use crate::cli::ParsedArgs;
     use crate::constants::{TEST_HOSTNAME, TEST_USERNAME};
 
@@ -81,17 +93,21 @@ mod tests {
 
     #[tokio::test]
     async fn test_dial_pass() {
+        let static_secret_key: SecretKey = SecretKey::random(&mut OsRng);
+
         let parsed_args = ParsedArgs {
             timeout: 1000,
             username: TEST_USERNAME.to_string(),
             hostname: TEST_HOSTNAME.to_string(),
         };
 
-        assert!(dial(parsed_args).await.is_ok());
+        assert!(dial(static_secret_key, parsed_args).await.is_ok());
     }
 
     #[tokio::test]
     async fn test_dial_fail_missing_colon() {
+        let static_secret_key: SecretKey = SecretKey::random(&mut OsRng);
+
         let bad_hostname = TEST_HOSTNAME.replace(':', "");
 
         let parsed_args = ParsedArgs {
@@ -100,7 +116,7 @@ mod tests {
             hostname: bad_hostname.clone(),
         };
 
-        let result = dial(parsed_args).await;
+        let result = dial(static_secret_key, parsed_args).await;
 
         assert!(result.is_err());
         assert_eq!(

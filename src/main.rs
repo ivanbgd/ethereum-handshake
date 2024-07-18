@@ -8,6 +8,9 @@
 
 use std::time::Instant;
 
+use k256::SecretKey;
+use rand_core::OsRng;
+
 use ethereum_handshake::cli::parse_cli_args;
 use ethereum_handshake::interface::{answer, dial};
 use ethereum_handshake::telemetry::init_tracing;
@@ -30,10 +33,12 @@ async fn main() -> eyre::Result<()> {
 
     init_tracing();
 
+    let static_secret_key = get_static_private_key();
+
     let parsed_args = parse_cli_args()?;
 
     if !parsed_args.hostname.is_empty() {
-        dial(parsed_args).await?;
+        dial(static_secret_key, parsed_args).await?;
     } else {
         answer(parsed_args.timeout).await?;
     }
@@ -41,4 +46,13 @@ async fn main() -> eyre::Result<()> {
     println!("\nTook {:.3?} to complete.", start.elapsed());
 
     Ok(())
+}
+
+/// Simulate reading of a static secp256k1 private key
+/// from a permanent (non-volatile) storage
+fn get_static_private_key() -> SecretKey {
+    let static_secret_key: SecretKey = SecretKey::random(&mut OsRng);
+    // let sk = Secret::new(sk.to_bytes());
+
+    static_secret_key
 }

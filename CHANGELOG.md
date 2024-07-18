@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Acting as a recipient (responding to a handshake request)
-- Connecting to and/or from multiple nodes at the same time
+- Connecting to and/or from multiple nodes at the same time (atomically)
 
-## [0.1.0] - 2024-07-16 - TODO
+## [0.1.0] - 2024-07-?? - WIP, TODO
 
 This is the very first (initial) fully-functioning version of the library and the program.
 

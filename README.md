@@ -13,15 +13,16 @@
   not only as an initiator of the connection, making it bidirectional.
 - It implements the Ethereum handshake procedure, which is part of the
   Ethereum's [RLPx](https://github.com/ethereum/devp2p/blob/master/rlpx.md)
-  transport protocol.  
-  We are basically implementing RLPx.
+  transport protocol.
+    - We are basically implementing RLPx.
 - Peer-to-peer communication is assumed in the Ethereum network.
 - Since the purpose of this program is to implement the handshake procedure,
   it doesn't use high-level crates that implement that functionality.
 - It instead works at a lower level, and uses lower-level crates.
 - Further communication, beyond a successful handshake, is not implemented.
 - We are also skipping the node discovery part.
-- We provide a configurable timeout for completing a handshake.
+- We provide a configurable timeout for establishing a TCP connection,
+  and for completing a full handshake procedure.
 
 ## Implementation
 
@@ -38,6 +39,8 @@
 - In case we add support for receiving calls and/or for supporting multiple
   connections at once, the design/architecture of the project will probably
   change, at least a little.
+    - The caveat is that each handshake should preferably complete as an atomic
+      operation, meaning it shouldn't be interrupted until it's complete.
 
 ## Development
 

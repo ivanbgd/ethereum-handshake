@@ -8,7 +8,7 @@ use std::ops::Deref;
 // use ecies::{decrypt, utils::generate_keypair};
 use ethereum_types::H256;
 use hex;
-use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey};
+use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey, SecretKey};
 // use k256::ecdsa::{self, Signature, signature::Signer, SigningKey};
 use rand_core::OsRng;
 // use rlp::{Rlp, RlpStream};
@@ -27,6 +27,7 @@ use crate::errors::HandshakeError;
 /// https://github.com/ethereum/devp2p/blob/master/rlpx.md
 #[instrument(level = "trace", skip_all)]
 pub async fn initiate_handshake(
+    static_secret_key: SecretKey,
     stream: &mut TcpStream,
     username: String,
     hostname: String,
@@ -34,7 +35,7 @@ pub async fn initiate_handshake(
     info!("Starting handshake with {}...", hostname);
 
     // 1. initiator connects to recipient and sends its auth message
-    step_1(stream, &username, &hostname).await?;
+    step_1(static_secret_key, stream, &username, &hostname).await?;
 
     // 5. initiator receives auth-ack and derives secrets
     step_5(stream, &username, &hostname).await?;
@@ -70,19 +71,14 @@ pub async fn respond_to_handshake() {
 /// Step 1: initiator connects to recipient and sends its `auth` message
 #[instrument(level = "trace", skip_all)]
 async fn step_1(
+    static_secret_key: SecretKey,
     stream: &mut TcpStream,
     username: &String,
     hostname: &String,
 ) -> Result<(), HandshakeError> {
     debug!("Begin Step 1 with {}", hostname);
 
-    let sk = k256::SecretKey::random(&mut OsRng);
-    // let sk = Secret::new(sk.to_bytes());
-    let _pk = EncodedPoint::from(sk.public_key());
-
-    let init_ephemeral_secret = EphemeralSecret::random(&mut OsRng);
-    let init_ephemeral_secret = Secret::new(init_ephemeral_secret);
-    let _init_pubkey_bytes = EncodedPoint::from(init_ephemeral_secret.expose_secret().public_key());
+    let _static_public_key = EncodedPoint::from(static_secret_key.public_key());
 
     let username = match hex::decode(username) {
         Ok(name) => name,
@@ -95,6 +91,10 @@ async fn step_1(
         Ok(key) => key,
         Err(err) => Err(HandshakeError::Sec1Error(err.to_string()))?,
     };
+
+    let init_ephemeral_secret = EphemeralSecret::random(&mut OsRng);
+    let init_ephemeral_secret = Secret::new(init_ephemeral_secret);
+    let _init_pubkey_bytes = EncodedPoint::from(init_ephemeral_secret.expose_secret().public_key());
 
     let init_shared = init_ephemeral_secret
         .expose_secret()
