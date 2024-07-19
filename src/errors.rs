@@ -43,6 +43,9 @@ pub enum HandshakeError {
     #[error("Sec1 error: {0}")]
     Sec1Error(String),
 
+    #[error("ECIES encrypt error: {0}")]
+    EciesEncryptError(String),
+
     #[error("I/O Error: {0}")]
     IOError(String),
 }

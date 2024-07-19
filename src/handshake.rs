@@ -3,13 +3,12 @@
 //! - Initiate handshake
 //! - Respond to a handshake request - not implemented
 
-use std::ops::Deref;
-
 // use ecies::{decrypt, utils::generate_keypair};
 use ethereum_types::H256;
 use hex;
 use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey, SecretKey};
 // use k256::ecdsa::{self, Signature, signature::Signer, SigningKey};
+// use k256::ecdsa::signature::SignerMut;
 use rand_core::OsRng;
 // use rlp::{Rlp, RlpStream};
 use rlp::RlpStream;
@@ -79,6 +78,8 @@ async fn step_1(
     debug!("Begin Step 1 with {}", hostname);
 
     let _static_public_key = EncodedPoint::from(static_secret_key.public_key());
+    let initiator_public_key = static_secret_key.public_key();
+    let initiator_public_key = &(*(initiator_public_key.to_sec1_bytes()))[1..];
 
     let username = match hex::decode(username) {
         Ok(name) => name,
@@ -87,39 +88,52 @@ async fn step_1(
     let mut aux = [0; PUBLIC_KEY_UNCOMPRESSED_LEN];
     aux[0] = 4;
     aux[1..].copy_from_slice(username.as_ref());
-    let recip_public = match PublicKey::from_sec1_bytes(aux.as_ref()) {
+    let recipient_public_key = match PublicKey::from_sec1_bytes(aux.as_ref()) {
         Ok(key) => key,
         Err(err) => Err(HandshakeError::Sec1Error(err.to_string()))?,
     };
 
     let init_ephemeral_secret = EphemeralSecret::random(&mut OsRng);
     let init_ephemeral_secret = Secret::new(init_ephemeral_secret);
-    let _init_pubkey_bytes = EncodedPoint::from(init_ephemeral_secret.expose_secret().public_key());
+    let _init_ephemeral_pubkey_bytes =
+        EncodedPoint::from(init_ephemeral_secret.expose_secret().public_key());
 
     let init_shared = init_ephemeral_secret
         .expose_secret()
-        .diffie_hellman(&recip_public);
-    let init_shared = H256::from_slice(init_shared.raw_secret_bytes());
+        .diffie_hellman(&recipient_public_key);
+    let init_shared = H256::from_slice(&init_shared.raw_secret_bytes()[..32]);
 
-    let init_nonce = H256::random();
-    let init_pubkey = init_ephemeral_secret.expose_secret().public_key();
+    let initiator_nonce = H256::random();
 
-    // compute signature
-    let _message = init_shared ^ init_nonce;
+    let _init_ephemeral_pubkey = init_ephemeral_secret.expose_secret().public_key();
+
+    // TODO: compute signature
+    let message = init_shared ^ initiator_nonce;
+    let signature = message;
+    // let signature: Signature = init_ephemeral_secret
+    //     .expose_secret()
+    //     .sign(message.as_fixed_bytes());
 
     // "auth_body" is an RLP stream of 4 values
     let mut rlp_stream = RlpStream::new_list(3);
-    // rlp_stream.append(signature);
-    rlp_stream.append(&init_pubkey.to_sec1_bytes().deref());
-    rlp_stream.append(&init_nonce);
+    rlp_stream.append(&signature);
+    // rlp_stream.append(&_init_ephemeral_pubkey.to_sec1_bytes().deref());
+    rlp_stream.append(&initiator_public_key);
+    rlp_stream.append(&initiator_nonce);
     rlp_stream.append(&AUTH_VERSION);
     let auth_body = rlp_stream.out();
 
     let _enc_auth_body = ecies::encrypt(username.as_ref(), auth_body.as_ref());
     let _enc_auth_body = ecies::encrypt(aux.as_ref(), auth_body.as_ref());
-    let _enc_auth_body = ecies::encrypt(&recip_public.to_sec1_bytes(), auth_body.as_ref());
 
-    let auth = _enc_auth_body.unwrap();
+    // TODO: add auth-padding, auth-size?
+    let enc_auth_body = ecies::encrypt(&recipient_public_key.to_sec1_bytes(), auth_body.as_ref())
+        .map_err(|err| HandshakeError::EciesEncryptError(err.to_string()))?;
+
+    let _auth_size = enc_auth_body.len();
+
+    // TODO: prepend with auth_size
+    let auth = enc_auth_body;
 
     // send the "auth" message to recipient
     stream.write_all(auth.as_ref()).await?;
