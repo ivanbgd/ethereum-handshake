@@ -2,9 +2,19 @@
 
 use thiserror::Error;
 
-/// Input errors that come from the CLI
+/// Input errors that occur during dialing
 #[derive(Debug, Error, PartialEq)]
-pub enum CliError {
+pub enum DialError {
+    #[error("Enode parse error: {0}")]
+    EnodeParseError(#[from] EnodeParseError),
+
+    #[error("Connection error: {0}")]
+    ConnectionError(#[from] ConnError),
+}
+
+/// Errors during parsing of an enode
+#[derive(Debug, Error, PartialEq)]
+pub enum EnodeParseError {
     #[error("Invalid recipient's enode. See help for the correct format.")]
     InvalidRecipientEnode,
 
@@ -13,19 +23,10 @@ pub enum CliError {
 
     #[error("Invalid recipient's host name: {0}")]
     InvalidRecipientHostName(String),
-
-    #[error("Connection error: {0}")]
-    ConnectionError(String),
-}
-
-impl From<ConnError> for CliError {
-    fn from(value: ConnError) -> Self {
-        Self::ConnectionError(value.to_string())
-    }
 }
 
 /// Connection errors
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum ConnError {
     #[error("TCP stream error: {0}")]
     TcpStreamError(String),
@@ -47,11 +48,5 @@ pub enum HandshakeError {
     EciesEncryptError(String),
 
     #[error("I/O Error: {0}")]
-    IOError(String),
-}
-
-impl From<std::io::Error> for HandshakeError {
-    fn from(value: std::io::Error) -> Self {
-        Self::IOError(value.to_string())
-    }
+    IOError(#[from] std::io::Error),
 }

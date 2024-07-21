@@ -11,8 +11,8 @@ use std::time::Instant;
 use k256::SecretKey;
 use rand_core::OsRng;
 
-use ethereum_handshake::cli::parse_cli_args;
-use ethereum_handshake::interface::{answer, dial};
+use ethereum_handshake::input::{parse_cli_args, parse_file_enodes};
+use ethereum_handshake::interface::{answer, dial_all};
 use ethereum_handshake::telemetry::init_tracing;
 
 /// The program's entry point
@@ -35,12 +35,22 @@ async fn main() -> eyre::Result<()> {
 
     let static_secret_key = get_static_private_key();
 
-    let parsed_args = parse_cli_args()?;
+    let parsed_args = parse_cli_args();
+    let timeout = parsed_args.timeout;
+    let cli_enodes = parsed_args.cli_enodes;
+    let file_enodes = parse_file_enodes(parsed_args.file_path).unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        Vec::new()
+    });
+    let mut enodes = Vec::with_capacity(cli_enodes.len() + file_enodes.len());
+    enodes.extend(cli_enodes);
+    enodes.extend(file_enodes);
 
-    if !parsed_args.hostname.is_empty() {
-        dial(&static_secret_key, parsed_args).await?;
+    // TODO: tokio::select maybe, but handshakes might not be atomic in that case, or they will be?
+    if !enodes.is_empty() {
+        dial_all(&static_secret_key, timeout, enodes).await?;
     } else {
-        answer(parsed_args.timeout).await?;
+        answer(timeout).await?;
     }
 
     println!("\nTook {:.3?} to complete.", start.elapsed());

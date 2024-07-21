@@ -7,8 +7,12 @@
 
 - This is a client program that dials and connects to an Ethereum node.
 - The node's [enode](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/#enode)
-  should be provided by the user through command line.
-    - It should contain an IPv4 address, which is almost always the case with Ethereum nodes.
+  can be provided by the user through command line and/or through a text file
+  which consists of a list of enodes, with an enode per line of the text file.
+    - It should contain an IPv4 address, which is almost always the case with
+      Ethereum nodes.
+    - All valid enodes from command line and the file are included.
+    - Invalid enodes are simply skipped.
 - TODO: It can act as a receiver (a listener), as well,
   not only as an initiator of the connection, making it bidirectional.
 - It implements the Ethereum handshake procedure, which is part of the
@@ -41,6 +45,8 @@
   change, at least a little.
     - The caveat is that each handshake should preferably complete as an atomic
       operation, meaning it shouldn't be interrupted until it's complete.
+- Input validation is performed at a single place, which is at the program's
+  boundary at which the data (which is recipient's enode's) enters the application.
 
 ## Development
 
@@ -68,12 +74,18 @@ We can also run them manually like this:
 
 There are no required arguments.
 
-TODO: If recipient isn't provided, the application will act as a receiver.
+TODO Level 1: If recipient isn't provided, the application will act only as a receiver.
+TODO Level 2: The application is bidirectional.
 
 ### Options
 
 - `-t`, `--timeout <TIMEOUT>`: Handshake timeout in milliseconds, from 100 to 10000 [default: 1000]
 - `-r`, `--recipient-enode <RECIPIENT_ENODE>`: Recipient node's `enode` in the following form:  
+  `enode://<node_id>@<ipv4_address>:<port>`
+    - This is a list of `enode`s, so there can be more than one; just prepend
+      each with `-r`.
+- `-f`, `--file-path <FILE_PATH>`: Path to a text file with a list of
+  recipient `enode`s in the following form:  
   `enode://<node_id>@<ipv4_address>:<port>`
 
 ## Running
@@ -96,11 +108,12 @@ TODO: If recipient isn't provided, the application will act as a receiver.
       [enode](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/#enode).
 - Executables can be downloaded from the repository's
   [Releases](https://github.com/ivanbgd/ethereum-handshake/releases) page.
-    - `ethereum-handshake [-t <TIMEOUT>] [-r <RECIPIENT_ENODE>]`
-        - Example: `ethereum-handshake -t 800 -r <RECIPIENT_ENODE>`
+    - `ethereum-handshake [-t <TIMEOUT>] [-r <RECIPIENT_ENODE>] [-f FILE_PATH]`
+        - Example: `ethereum-handshake -t 2500 -r <RECIPIENT_ENODE> -f <FILE_PATH> -r <RECIPIENT_ENODE>`
 - Alternatively, by using `cargo`:
     - `cargo run [--release] -- [-t <TIMEOUT>] [-r <RECIPIENT_ENODE>]`
-        - Example: `cargo run -- -t 2000 -r <RECIPIENT_ENODE>`
+        - Example: `cargo run -- -r <RECIPIENT_ENODE>`
+        - Example: `cargo run -- -f <FILE_PATH>`
 
 ## Testing
 
@@ -112,9 +125,8 @@ TODO: If recipient isn't provided, the application will act as a receiver.
 
 ## References
 
-- [Network Addresses](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/)
 - [Networking Layer](https://ethereum.org/en/developers/docs/networking-layer/)
-- [noise-libp2p - Secure Channel Handshake](https://github.com/libp2p/specs/tree/master/noise)
+    - [Network Addresses](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/)
 - [Phase 0 - Networking: The P2P Interface](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md)
 - [Recursive-Length Prefix (RLP) Serialization](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/)
 - [The RLPx Transport Protocol (devp2p)](https://github.com/ethereum/devp2p/blob/master/rlpx.md)

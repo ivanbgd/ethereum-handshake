@@ -115,7 +115,7 @@ async fn step_1(
     //     .sign(message.as_fixed_bytes());
 
     // "auth_body" is an RLP stream of 4 values
-    let mut rlp_stream = RlpStream::new_list(3);
+    let mut rlp_stream = RlpStream::new_list(4);
     rlp_stream.append(&signature);
     // rlp_stream.append(&_init_ephemeral_pubkey.to_sec1_bytes().deref());
     rlp_stream.append(&initiator_public_key);

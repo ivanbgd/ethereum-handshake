@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the very first (initial) fully-functioning version of the library and the program.
 
-The program supports the initiator mode, acting as a client and calling another node.
+The program supports the initiator mode, acting as a client and calling another node(s).
 
-The handshake procedure is implemented in that case.
+Recipient's enodes can be provided via CLI and/or a text file.
+
+The handshake procedure is implemented for the initiator mode.
 
 ### Added
 
